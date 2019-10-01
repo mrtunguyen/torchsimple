@@ -90,11 +90,13 @@ class DefaultMetricsCallback(Callback):
     def __init__(self,
                  target_key: str,
                  preds_key: str,
-                 metrics: Optional[Dict[str, Callable]] = None) -> None:
+                 metrics: Optional[Dict[str, Callable]] = None,
+                 loss_key : str = 'loss') -> None:
         self.metrics = metrics or {}
         self.pbar_metrics = None
         self.target_key = target_key
         self.preds_key = preds_key
+        self.loss_key = loss_key
     
     def get_metric(self,
                    metric : Callable,
@@ -116,12 +118,22 @@ class DefaultMetricsCallback(Callback):
 
     def on_batch_end(self, i: int, state: DotDict) -> None:
         if state.mode == "val":
-            self.pbar_metrics["val_loss"] += float(to_numpy(state.loss))
+            if isinstance(state.loss, dict):
+                loss = state.loss[self.loss_key]
+            elif isinstance(state.loss, torch.Tensor):
+                loss = state.loss
+                
+            self.pbar_metrics["val_loss"] += float(to_numpy(loss))
             self.update_epoch_metrics(target=state.batch[self.target_key],
                                       preds=state.out[self.preds_key])
         # tb logs
         if state.mode != "test" and state.do_log:
-            state.metrics[state.mode]["loss"] = float(to_numpy(state.loss))
+            if isinstance(state.loss, dict):
+                for key, value in state.loss.items():
+                    state.metrics[state.mode][key] = float(to_numpy(state.loss[key]))
+            elif isinstance(state.loss, torch.Tensor):
+                state.metrics[state.mode]["loss"] = float(to_numpy(state.loss))
+            
             for name, m in self.metrics.items():
                 preds = state.out[self.preds_key]
                 target = state.batch[self.target_key]
