@@ -43,11 +43,14 @@ class DefaultOptimizerCallback(Callback):
         self.clip = clip
         self.loss_key = loss_key
         self.accum_steps = accum_steps
+    
+    def on_epoch_begin(self, state: DotDict) -> None:
+        if state.mode == "train"
+            state.opt.zero_grad()
         
     def on_batch_end(self, i: int, state: DotDict) -> None:
         if state.mode == "train":
             
-            state.opt.zero_grad()
             if isinstance(state.loss, torch.Tensor):
                 loss = state.loss
             elif isinstance(state.loss, dict):
@@ -55,7 +58,8 @@ class DefaultOptimizerCallback(Callback):
             
             if self.accum_steps:
                 loss = loss / self.accum_steps
-                
+            
+            # graph is cleared here
             if state.use_fp16:
                 state.opt.backward(loss)
             else:
