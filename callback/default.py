@@ -1,4 +1,5 @@
 from apex import amp
+from apex.amp._amp_state import _amp_state
 from pathlib import Path
 from collections import defaultdict
 import shutil
@@ -35,20 +36,38 @@ class DefaultOptimizerCallback(Callback):
     If an optimizer is not precised during fit of training, this callback will be 
     used for the optimizer of model.
     """
-    def __init__(self, clip:float=None):
+    def __init__(self, 
+                 clip:float=1.0,
+                 loss_key:str='loss',
+                 accum_steps:int=1):
         self.clip = clip
+        self.loss_key = loss_key
+        self.accum_steps = accum_steps
         
     def on_batch_end(self, i: int, state: DotDict) -> None:
         if state.mode == "train":
+            
             state.opt.zero_grad()
+            if isinstance(state.loss, torch.Tensor):
+                loss = state.loss
+            elif isinstance(state.loss, dict):
+                loss = state.loss[self.loss_key]
+            
+            if self.accum_steps:
+                loss = loss / self.accum_steps
+                
             if state.use_fp16:
-                state.opt.backward(state.loss)
+                state.opt.backward(loss)
             else:
-                state.loss.backward()
+                loss.backward()
                 
             self.on_backward_end(state)
-            state.opt.step()
-    
+            
+            _amp_state.verbosity = 0 #to mute the message loss scale of apex
+            if (i+1) % self.accum_steps == 0:
+                state.opt.step()
+                state.opt.zero_grad()
+                
     def on_backward_end(self, state: DotDict):
         "Clip the gradient before the optimizer step"
         if self.clip: 
