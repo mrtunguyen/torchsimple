@@ -1,9 +1,4 @@
-from collections import namedtuple
-from typing import Dict, Callable, Optional
-import pandas as pd
-
-from torch.utils.data import Dataset
-from torchvision.transforms import Compose
+from lib import *
 
 class MyDataset(Dataset):
     """The easiest way to store the dataset info is pandas DataFrame.

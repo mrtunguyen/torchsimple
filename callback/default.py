@@ -45,7 +45,7 @@ class DefaultOptimizerCallback(Callback):
         self.accum_steps = accum_steps
     
     def on_epoch_begin(self, state: DotDict) -> None:
-        if state.mode == "train"
+        if state.mode == "train":
             state.opt.zero_grad()
         
     def on_batch_end(self, i: int, state: DotDict) -> None:

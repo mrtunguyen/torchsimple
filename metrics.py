@@ -1,4 +1,4 @@
-from callback import Callback
+from .callback import Callback
 
 
 def dice_coef(pred: torch.Tensor, 

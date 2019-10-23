@@ -5,6 +5,6 @@ from .logger import Logger
 from .mixup import MixUpCallback
 from .debug import DebuggerCallback
 from .default import (DefaultLossCallback, DefaultOptimizerCallback, 
-                     DefaultSchedulerCallback, DefaultMetricsCallback,
-                     PredictionsSaverCallback, CheckpointSaverCallback,
-                     EarlyStoppingCallback, ProgressBarCallback)
+                      DefaultSchedulerCallback, DefaultMetricsCallback,
+                      PredictionsSaverCallback, CheckpointSaverCallback,
+                      EarlyStoppingCallback, ProgressBarCallback)

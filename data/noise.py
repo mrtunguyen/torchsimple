@@ -1,7 +1,4 @@
-import numpy as np
-import cv2
-from scipy.ndimage.filters import gaussian_filter
-import collections
+from lib import *
 
 def random_num_generator(random_config, random_state = np.random):
     if random_config[0] == 'uniform':

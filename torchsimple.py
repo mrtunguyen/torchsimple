@@ -1,23 +1,11 @@
-from collections import defaultdict
-from pathlib import Path
-from pdb import set_trace
-from typing import Any, Callable, List, Tuple, Type, Dict, Union, Optional, Collection
-import numpy as np
-from apex import amp
-from apex.fp16_utils import FP16_Optimizer
-from apex.parallel import DistributedDataParallel
-import torch
-from torch.utils.data import DataLoader
-from torch.optim import SGD
-from .callback import Callback, Callbacks, ProgressBarCallback, \
-    PredictionsSaverCallback, OneCycleLR, DefaultLossCallback, DefaultMetricsCallback, \
-    Logger, LRFinder, CheckpointSaverCallback, DefaultSchedulerCallback, \
-    EarlyStoppingCallback, DefaultOptimizerCallback
-
+from lib import *
+from .callback import (Callback, Callbacks, ProgressBarCallback, 
+                       PredictionsSaverCallback, OneCycleLR, DefaultLossCallback, DefaultMetricsCallback, 
+                       Logger, LRFinder, CheckpointSaverCallback, DefaultSchedulerCallback, 
+                       EarlyStoppingCallback, DefaultOptimizerCallback)
 from .utils import DotDict, freeze_to, freeze, unfreeze, load_state_dict, convert_model_to_half
 from .data import DataOwner
 from .parallel import DataParallelCriterion, DataParallelModel
-from torch.nn.parallel import DistributedDataParallel
 
 class Trainer:
     
@@ -47,7 +35,7 @@ class Trainer:
         
         self.state.criterion = criterion
         
-        self.opt = opt or SGD
+        self.opt = opt or optim.SGD
         self.opt_params = opt_params or {}
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.state.model.to(self.device)
