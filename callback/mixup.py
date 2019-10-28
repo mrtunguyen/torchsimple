@@ -1,8 +1,4 @@
-import numpy as np
-from functools import partial
-import torch
-from torch import nn
-from torchsimple.utils import DotDict
+from torchsimple.lib import *
 from .callback import Callback
 
 __all__ = ['MixUpCallback', 'MixupLoss']

@@ -1,4 +1,4 @@
-from lib import *
+from torchsimple.lib import *
 
 class MyDataset(Dataset):
     """The easiest way to store the dataset info is pandas DataFrame.

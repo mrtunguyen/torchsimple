@@ -1,5 +1,5 @@
 from typing import Any
-from torchsimple.utils import DotDict
+from torchsimple.lib import DotDict
 import torch
 
 __all__ = ['Callback', 'Callbacks', 'LRUpdater']

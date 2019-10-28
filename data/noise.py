@@ -1,4 +1,4 @@
-from lib import *
+from torchsimple.lib import *
 
 def random_num_generator(random_config, random_state = np.random):
     if random_config[0] == 'uniform':

@@ -1,6 +1,5 @@
-from typing import List
 from .callback import Callback
-from torchsimple.utils import DotDict
+from torchsimple.lib import *
 
 __all__ = ['DebuggerCallback']
 

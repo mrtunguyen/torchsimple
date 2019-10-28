@@ -1,12 +1,6 @@
 # from tensorboardX import SummaryWriter
-from pathlib import Path
-import numpy as np
-from typing import Union
-from collections import defaultdict
 from .callback import Callback
-from torchsimple.core import MonitorWriter
-from torchsimple.utils import DotDict, get_opt_lr, to_numpy
-import shutil
+from torchsimple.lib import *
 __all__ = ['Logger']
 
 class Logger(Callback):

@@ -1,7 +1,5 @@
-from typing import Tuple
 from .callback import LRUpdater
-from torchsimple.core import Scheduler, annealing_cos
-from torchsimple.utils import DotDict
+from torchsimple.lib import *
 
 __all__ = ['OneCycleLR']
 
@@ -31,7 +29,7 @@ class OneCycleLR(LRUpdater):
     
     def on_train_begin(self, state: DotDict):
         res = {'epoch' : self.start_epoch} if self.start_epoch is not None else None
-        n = len(state.core.dataowner.train_dl) * self.total_epochs
+        n = len(state.dataowner.train_dl) * self.total_epochs
         a1 = int(n * self.increase_fraction)
         a2 = n - a1
         self.phases = ((a1, annealing_cos), (a2, annealing_cos))
@@ -39,8 +37,8 @@ class OneCycleLR(LRUpdater):
         self.lr_scheds = self.steps((low_lr, self.max_lr), (self.max_lr, self.max_lr/self.final_div))
         self.mom_scheds = self.steps(self.momentum_range, (self.momentum_range[1], self.momentum_range[0]))
         self.idx_s = 0
-        self.update_lr(self.lr_scheds[0].start, state.core.opt)
-        self.update_momentum(self.mom_scheds[0].start, state.core.opt)
+        self.update_lr(self.lr_scheds[0].start, state.opt)
+        self.update_momentum(self.mom_scheds[0].start, state.opt)
         
     def calc_lr(self) -> float:
         return self.lr_scheds[self.idx_s].step()
@@ -50,5 +48,5 @@ class OneCycleLR(LRUpdater):
     
     def on_batch_end(self, i:int, state:DotDict):
         super().on_batch_end(i, state)
-        if state.core.mode == "train" and self.lr_scheds[self.idx_s].is_done:
+        if state.mode == "train" and self.lr_scheds[self.idx_s].is_done:
             self.idx_s += 1

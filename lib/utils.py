@@ -1,10 +1,12 @@
-import os
-from typing import List, Iterable
-import numpy as np
-from functools import partial
-from torch import optim
+from .common import *
 
-AdamW = partial(optim.Adam, betas=(0.9,0.99))
+def load_h5(path:str):
+    return h5py.File(path)
+
+def load_yaml(path:str):
+    with open(path, 'r') as file:
+        res = yaml.load(file)
+    return res
 
 def is_tuple(x)->bool: return isinstance(x, tuple)
 
@@ -51,8 +53,7 @@ class Scheduler():
             self.func = func
             
         self.n = 0
-        
-    def restart(self): self.n = 0
+        def restart(self): self.n = 0
         
     def step(self):
         "Return next value along annealed schedule"
@@ -62,35 +63,14 @@ class Scheduler():
     @property
     def is_done(self):
         return self.n >= self.n_iter
-    
-class AverageMeter(object):
-    
-    def __init__(self):
-        self.reset()
         
-    def reset(self):
-        self.val = {}
-        self.avg = {}
-        self.sum = 0
-        self.count = 0
-    
-    def update(self, val):
-        self.count += 1
-        self.sum += val 
-        self.val[self.count] = val
-        self.avg[self.count] = self.sum/self.count
+class SmoothValue():
+    """Create a smooth moving average for a value (loss, etc) using 'beta'
+    """ 
+    def __init__(self, beta:float):
+        self.beta, self.num, self.mov_arg = beta, 0, 0
         
-class MonitorWriter(object):
-    def __init__(self, logdir, filename):
-        self.logdir = logdir
-        self.filename = filename
-        self.file = open(os.path.join(logdir, filename), mode = 'a')
-        
-    def reset(self):
-        self.file = open(os.path.join(self.logdir, self.filename), mode = 'w')
-        
-    def update(self, loss, iter):
-        self.file.write(f"{iter},{loss}\n")
-        
-    def close(self):
-        self.file.close()
+    def add_value(self, value:float):
+        self.num += 1
+        self.mov_arg = self.beta * self.mov_arg + (1- self.beta) * value
+        self.smooth = self.mov_arg / (1- self.beta ** self.num)

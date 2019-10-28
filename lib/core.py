@@ -1,28 +1,8 @@
-from functools import reduce
-import sys
-from typing import Any, Dict, Union, Hashable, Type, List, Optional
-
-import numpy as np
-from tqdm import tqdm
-import h5py
-import yaml
-import torch
-from torch import nn, Tensor
-from torch.utils.data import DataLoader
-from pathlib import Path
-import os
-from apex.fp16_utils import BN_convert_float
+from .common import *
 
 BN_TYPES = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)
-
-def load_h5(path:str):
-    return h5py.File(path)
-
-def load_yaml(path:str):
-    with open(path, 'r') as file:
-        res = yaml.load(file)
-    return res
-
+AdamW = partial(optim.Adam, betas=(0.9,0.99))
+    
 def freeeze_from_to(module: nn.Module,
                     n_from:int,
                     n_to: int,
@@ -209,14 +189,35 @@ def load_state_dict(model: torch.nn.Module,
                 raise Exception(m)
             #TODO: if skip_wrong_shape
     model.load_state_dict(model_state_dict)
+
+class AverageMeter(object):
     
-class SmoothValue():
-    """Create a smooth moving average for a value (loss, etc) using 'beta'
-    """ 
-    def __init__(self, beta:float):
-        self.beta, self.num, self.mov_arg = beta, 0, 0
+    def __init__(self):
+        self.reset()
         
-    def add_value(self, value:float):
-        self.num += 1
-        self.mov_arg = self.beta * self.mov_arg + (1- self.beta) * value
-        self.smooth = self.mov_arg / (1- self.beta ** self.num)
+    def reset(self):
+        self.val = {}
+        self.avg = {}
+        self.sum = 0
+        self.count = 0
+    
+    def update(self, val):
+        self.count += 1
+        self.sum += val 
+        self.val[self.count] = val
+        self.avg[self.count] = self.sum/self.count
+        
+class MonitorWriter(object):
+    def __init__(self, logdir, filename):
+        self.logdir = logdir
+        self.filename = filename
+        self.file = open(os.path.join(logdir, filename), mode = 'a')
+        
+    def reset(self):
+        self.file = open(os.path.join(self.logdir, self.filename), mode = 'w')
+        
+    def update(self, loss, iter):
+        self.file.write(f"{iter},{loss}\n")
+        
+    def close(self):
+        self.file.close()

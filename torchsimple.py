@@ -1,11 +1,10 @@
-from lib import *
-from .callback import (Callback, Callbacks, ProgressBarCallback, 
+from torchsimple.lib import *
+from torchsimple.callback import (Callback, Callbacks, ProgressBarCallback, 
                        PredictionsSaverCallback, OneCycleLR, DefaultLossCallback, DefaultMetricsCallback, 
                        Logger, LRFinder, CheckpointSaverCallback, DefaultSchedulerCallback, 
                        EarlyStoppingCallback, DefaultOptimizerCallback)
-from .utils import DotDict, freeze_to, freeze, unfreeze, load_state_dict, convert_model_to_half
-from .data import DataOwner
-from .parallel import DataParallelCriterion, DataParallelModel
+from torchsimple.data import DataOwner
+from torchsimple.parallel import DataParallelCriterion, DataParallelModel
 
 class Trainer:
     
@@ -99,6 +98,9 @@ class Trainer:
         opt = opt or self.opt
         opt_params = opt_params or self.opt_params
         params =  (p for p in self.state.model.parameters() if p.requires_grad)
+
+        if lr is not None and 'lr' in opt_params:
+            _ = opt_params.pop('lr')
         self.state.opt = opt(params=params, lr=lr, **opt_params)
         
         if self.state.use_fp16:
@@ -248,8 +250,7 @@ class Trainer:
             self.state.checkpoint = ""
     
     @staticmethod
-    def default_step_fn(model: torch.nn.Module,
-                        batch: torch.Tensor) -> torch.Tensor:
+    def default_step_fn(state) -> torch.Tensor:
         """Determine what your model will do with your data.
 
         Args:
@@ -259,8 +260,14 @@ class Trainer:
         Returns:
             The models forward pass results
         """
-        inp = batch["image"]
-        return model(inp)
+        model, batch = state.model, state.batch
+        input = batch["image"]
+        if state.use_fp16:
+            input = input.half()
+        out = model(input)
+        if isinstance(out, torch.Tensor):
+            out = out.float()
+        return out
     
     def step(self):
         """The step function that calls each iteration
@@ -440,15 +447,26 @@ class Trainer:
         Returns:
             The batch dict with tensors on self.device.
         """
-        res = {}
-        for k, v in batch.items():
-            if isinstance(v, dict):
-                v = self.to_device(v)
-            else:
-                if hasattr(v, "to"):
-                    v = v.to(self.device)
-                    
-            res[k] = v
+        if isinstance(batch, dict):
+            res = {}
+            for k, v in batch.items():
+                if isinstance(v, dict):
+                    v = self.to_device(v)
+                else:
+                    if hasattr(v, "to"):
+                        v = v.to(self.device)
+                        
+                res[k] = v
+        elif isinstance(batch, tuple) or isinstance(batch, list):
+            res = []
+            for v in batch:
+                if isinstance(v, dict):
+                    v = self.to_device(v)
+                else:
+                    if hasattr(v, "to"):
+                        v = v.to(self.device)
+                res.append(v)
+
         return res
         
     def to_fp16(self):

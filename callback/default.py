@@ -1,14 +1,7 @@
-from apex import amp
-from apex.amp._amp_state import _amp_state
-from pathlib import Path
-from collections import defaultdict
-import shutil
-import numpy as np
-import torch
+from torchsimple.lib import *
 from torch.optim.lr_scheduler import ReduceLROnPlateau, _LRScheduler
-from typing import Optional, Callable, Union, Dict, List, Type
 from .callback import Callback
-from torchsimple.utils import DotDict, get_pbar, to_numpy, exp_weight_average, extend_postfix
+from apex.amp._amp_state import _amp_state
 
 __all__ = ['DefaultLossCallback', 'DefaultOptimizerCallback', 'DefaultSchedulerCallback',
            'DefaultMetricsCallback', 'PredictionsSaverCallback', 'CheckpointSaverCallback',
@@ -44,7 +37,7 @@ class DefaultOptimizerCallback(Callback):
         self.loss_key = loss_key
         self.accum_steps = accum_steps
     
-    def on_epoch_begin(self, state: DotDict) -> None:
+    def on_epoch_begin(self, epoch:int, epochs:int, state: DotDict) -> None:
         if state.mode == "train":
             state.opt.zero_grad()
         
@@ -147,8 +140,9 @@ class DefaultMetricsCallback(Callback):
                 loss = state.loss
                 
             self.pbar_metrics["val_loss"] += float(to_numpy(loss))
-            self.update_epoch_metrics(target=state.batch[self.target_key],
-                                      preds=state.out[self.preds_key])
+            if isinstance(state.batch, dict):
+                self.update_epoch_metrics(target=state.batch[self.target_key],
+                                          preds=state.out[self.preds_key])
         # tb logs
         if state.mode != "test" and state.do_log:
             if isinstance(state.loss, dict):
@@ -216,7 +210,7 @@ class CheckpointSaverCallback(Callback):
         self.metric = metric or "val_loss"
         self.n_best = n_best
         self.savedir = Path(savedir)
-        self.savedir.parent.mkdir(exist_ok=True)
+        self.savedir.parent.mkdir(exist_ok=True, parents=True)
         self.iterators_per_checkpoint = iterators_per_checkpoint
         self.prefix = f"{prefix}." if prefix is not None else "checkpoint."
 

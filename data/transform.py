@@ -1,4 +1,4 @@
-from lib import *
+from torchsimple.lib import *
 
 IMAGENET_STATS = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 NOMALIZE_STATS = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)

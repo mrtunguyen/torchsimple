@@ -21,9 +21,17 @@ from PIL import Image, ImageOps
 import math
 import re
 import warnings
-from typing import Any, Callable, List, Tuple, Type, Dict, Union, Optional, Collection
+from typing import (Any, Callable, List, Tuple, Type, Dict, Union, Optional, 
+                    Collection, Hashable, Iterable)
 from collections import namedtuple, defaultdict, deque
 import collections
+from functools import reduce, partial
+import h5py
+import yaml
+import pickle
+from enum import Enum
+import shutil
+import gc
 
 #sklearn
 from sklearn.pipeline import make_pipeline, make_union, Pipeline, FeatureUnion
@@ -40,24 +48,25 @@ from category_encoders import OrdinalEncoder, TargetEncoder
 
 # torch 
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import RandomSampler, SequentialSampler, Sampler, BatchSampler
 from torch.nn.parallel.data_parallel import data_parallel
-from torch.nn.utils.rnn import *
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils import weight_norm, spectral_norm
 from torch.nn.parallel import DistributedDataParallel
 
 #torchvision
-from torchvision import transforms
+from torchvision import transforms, datasets
 from torchvision.transforms import Compose, Normalize
 from torchvision.models import *
 from torchvision.models.segmentation import (DeepLabV3, deeplabv3_resnet101, deeplabv3_resnet50,
                                              FCN, fcn_resnet101)
-from torchvision.models.detection import (FasterRCNN, fasterrcnn_resnet50_fpn, FastRCNNPredictor, 
-                                          RegionProposalNetwork)
+from torchvision.models.detection import (FasterRCNN, fasterrcnn_resnet50_fpn)
 
 #apex - mixed precision
-from apex.fp16_utils import FP16_Optimizer
+from apex.fp16_utils import FP16_Optimizer, BN_convert_float
 from apex.parallel import DistributedDataParallel
